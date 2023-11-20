@@ -1,0 +1,28 @@
+name: Deploy MultiDocker
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code  
+        uses: actions/checkout@v3
+      - name: Log in to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - run: docker build -t lbarahona140/react-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true lbarahona140/react-test npm test
+
+      - run: docker build -t lbarahona140/multi-client ./client
+      - run: docker build -t lbarahona140/multi-nginx ./nginx
+      - run: docker build -t lbarahona140/multi-server ./server
+      - run: docker build -t lbarahona140/multi-worker ./worker
+
+      - run: docker push lbarahona140/multi-client
+      - run: docker push lbarahona140/multi-nginx
+      - run: docker push lbarahona140/multi-server
+      - run: docker push lbarahona140/multi-worker
